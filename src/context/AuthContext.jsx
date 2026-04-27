@@ -36,6 +36,12 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.login(email || 'admin@boardfinder.lk', password || '123');
     data.user.role = role || 'student';
     data.user.name = name;
+    
+    if (role === 'owner') {
+      data.user.isVerified = false;
+      data.user.verificationStatus = 'unverified';
+    }
+    
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setToken(data.token);

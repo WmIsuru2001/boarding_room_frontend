@@ -14,6 +14,35 @@ export default function OwnerDashboardPage() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Verification states
+  const [verificationStatus, setVerificationStatus] = useState(user?.verificationStatus || 'unverified');
+  const [showVerificationBanner, setShowVerificationBanner] = useState(!user?.isVerified);
+  const [nicFile, setNicFile] = useState(null);
+  const [billFile, setBillFile] = useState(null);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setShowVerificationBanner(!user.isVerified);
+      setVerificationStatus(user.verificationStatus || (user.isVerified ? 'verified' : 'unverified'));
+    }
+  }, [user]);
+
+  const handleDocumentSubmit = (e) => {
+    e.preventDefault();
+    if (!nicFile || !billFile) {
+      toast.error("Please select both your NIC and Utility Bill.");
+      return;
+    }
+    setUploadingDocs(true);
+    // Simulate upload delay
+    setTimeout(() => {
+      setUploadingDocs(false);
+      setVerificationStatus('pending');
+      toast.success("Documents submitted successfully. Waiting for admin approval.");
+    }, 1500);
+  };
+
   useEffect(() => {
     listingService.getListingsByOwnerId(user?.id || 'owner1').then(data => { setListings(data); setLoading(false); });
   }, [user]);
@@ -35,8 +64,45 @@ export default function OwnerDashboardPage() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-8)' }}>
           <div><h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>🏠 {t('owner.dashboard')}</h1><p style={{ color: 'var(--text-muted)' }}>Welcome, {user?.name}</p></div>
-          <Link to="/owner/listings/new" className="btn btn-primary"><FiPlus size={16} /> {t('owner.addRoom')}</Link>
+          {(!showVerificationBanner || verificationStatus === 'verified') ? (
+            <Link to="/owner/listings/new" className="btn btn-primary"><FiPlus size={16} /> {t('owner.addRoom')}</Link>
+          ) : (
+            <button className="btn btn-primary" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} title="Please verify your account first"><FiPlus size={16} /> {t('owner.addRoom')}</button>
+          )}
         </div>
+
+        {/* Verification Banner */}
+        {showVerificationBanner && verificationStatus === 'unverified' && (
+          <div className="card" style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-8)', borderLeft: '4px solid var(--warning)', background: 'var(--bg-tertiary)' }}>
+            <h3 style={{ color: 'var(--warning)', fontWeight: 700, marginBottom: 'var(--space-2)' }}>⚠️ Account Verification Required</h3>
+            <p style={{ marginBottom: 'var(--space-4)', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              <strong>Oyawa thama verify wela na. Karunakara oyage ID ekei, jala bilak/viduli bilak upload karanna.</strong><br/>
+              <span style={{ fontSize: '0.85rem' }}>(You are not verified yet. Please upload your NIC and a utility bill to publish rooms.)</span>
+            </p>
+            <form onSubmit={handleDocumentSubmit} className="flex gap-4 items-end flex-wrap">
+              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+                <label className="form-label" style={{ fontSize: '0.8rem' }}>Upload NIC (Front & Back)</label>
+                <input type="file" className="form-input" accept="image/*" onChange={e => setNicFile(e.target.files[0])} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+                <label className="form-label" style={{ fontSize: '0.8rem' }}>Upload Utility Bill</label>
+                <input type="file" className="form-input" accept="image/*,.pdf" onChange={e => setBillFile(e.target.files[0])} />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={uploadingDocs}>
+                {uploadingDocs ? 'Uploading...' : 'Submit Documents'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {showVerificationBanner && verificationStatus === 'pending' && (
+          <div className="card" style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-8)', borderLeft: '4px solid var(--primary)', background: 'var(--bg-tertiary)' }}>
+            <h3 style={{ color: 'var(--primary)', fontWeight: 700, marginBottom: 'var(--space-2)' }}>⏳ Verification Pending</h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+              Your documents have been submitted and are under review by an Admin. Once approved, you will be able to publish rooms.
+            </p>
+          </div>
+        )}
         <div className="grid-3" style={{ marginBottom: 'var(--space-8)' }}>
           <StatsCard icon={<FiEye size={22} />} label={t('owner.totalViews')} value={totalViews} color="#0EA5E9" bgColor="#F0F9FF" />
           <StatsCard icon={<FiHeart size={22} />} label={t('owner.totalFavorites')} value={totalFavs} color="#EF4444" bgColor="#FEF2F2" />

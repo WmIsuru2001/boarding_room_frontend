@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { listingService } from '../../services/listingService';
 import StatsCard from '../../components/admin/StatsCard';
 import toast from 'react-hot-toast';
+import { authService } from '../../services/authService';
+import { getImageUrl } from '../../utils/imageHelper';
 
 export default function OwnerDashboardPage() {
   const { t } = useTranslation();
@@ -16,35 +18,45 @@ export default function OwnerDashboardPage() {
 
   // Verification states
   const [verificationStatus, setVerificationStatus] = useState(user?.verificationStatus || 'unverified');
-  const [showVerificationBanner, setShowVerificationBanner] = useState(!user?.isVerified);
+  const [showVerificationBanner, setShowVerificationBanner] = useState(user?.verificationStatus !== 'verified');
   const [nicFile, setNicFile] = useState(null);
   const [billFile, setBillFile] = useState(null);
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setShowVerificationBanner(!user.isVerified);
-      setVerificationStatus(user.verificationStatus || (user.isVerified ? 'verified' : 'unverified'));
+      setShowVerificationBanner(user.verificationStatus !== 'verified');
+      setVerificationStatus(user.verificationStatus || 'unverified');
     }
   }, [user]);
 
-  const handleDocumentSubmit = (e) => {
+  const handleDocumentSubmit = async (e) => {
     e.preventDefault();
     if (!nicFile || !billFile) {
       toast.error("Please select both your NIC and Utility Bill.");
       return;
     }
     setUploadingDocs(true);
-    // Simulate upload delay
-    setTimeout(() => {
-      setUploadingDocs(false);
+    try {
+      const formData = new FormData();
+      formData.append('nic', nicFile);
+      formData.append('bill', billFile);
+      
+      await authService.uploadVerification(formData);
+      
       setVerificationStatus('pending');
       toast.success("Documents submitted successfully. Waiting for admin approval.");
-    }, 1500);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to upload documents');
+    } finally {
+      setUploadingDocs(false);
+    }
   };
 
   useEffect(() => {
-    listingService.getListingsByOwnerId(user?.id || 'owner1').then(data => { setListings(data); setLoading(false); });
+    if (user) {
+      listingService.getMyListings().then(data => { setListings(data || []); setLoading(false); }).catch(() => { setListings([]); setLoading(false); });
+    }
   }, [user]);
 
   const totalViews = listings.reduce((s, l) => s + (l.viewCount || 0), 0);
@@ -112,8 +124,8 @@ export default function OwnerDashboardPage() {
         {loading ? <div className="loading-screen"><div className="spinner" /></div> : (
           <div className="flex-col gap-4">
             {listings.map(l => (
-              <div key={l.id} className="card" style={{ display: 'flex', overflow: 'hidden' }}>
-                <img src={l.images?.[0]} alt={l.title} style={{ width: 180, height: 140, objectFit: 'cover' }} />
+              <div key={l.id || l._id} className="card" style={{ display: 'flex', overflow: 'hidden' }}>
+                <img src={getImageUrl(l.images?.[0] || l.photos?.[0])} alt={l.title} style={{ width: 180, height: 140, objectFit: 'cover' }} />
                 <div style={{ flex: 1, padding: 'var(--space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>

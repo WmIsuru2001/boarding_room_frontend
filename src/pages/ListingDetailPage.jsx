@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { listingService } from '../services/listingService';
 import { reviews as mockReviews } from '../mockData/mockDb';
+import { getImageUrl } from '../utils/imageHelper';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -25,14 +26,15 @@ export default function ListingDetailPage() {
   if (loading) return <div className="loading-screen"><div className="spinner spinner-lg" /></div>;
   if (!listing) return <div className="empty-state" style={{ marginTop: '4rem' }}><div className="empty-icon">😔</div><h3>Listing not found</h3></div>;
 
-  const imgs = listing.images || listing.photos || [];
+  const rawImgs = listing.images || listing.photos || [];
+  const imgs = rawImgs.length > 0 ? rawImgs.map(img => getImageUrl(img)) : [getImageUrl(null)];
 
   return (
     <div className="detail-page">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         {/* Image Gallery */}
         <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 'var(--space-8)', height: 400 }}>
-          <img src={imgs[activeImg] || imgs[0]} alt={listing.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={imgs[activeImg]} alt={listing.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           {imgs.length > 1 && (
             <>
               <button onClick={() => setActiveImg(p => p > 0 ? p - 1 : imgs.length - 1)} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><FiChevronLeft size={20} /></button>

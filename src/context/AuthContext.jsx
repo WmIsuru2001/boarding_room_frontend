@@ -13,10 +13,18 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
 
   const fetchUser = useCallback(async () => {
-    const saved = localStorage.getItem('user');
-    if (saved) setUser(JSON.parse(saved));
-    else logout();
-  }, []);
+    try {
+      if (token) {
+        const res = await authService.getCurrentUser();
+        setUser(res.user);
+        if (res.profile) setProfile(res.profile);
+        localStorage.setItem('user', JSON.stringify(res.user));
+      }
+    } catch (err) {
+      console.error(err);
+      logout();
+    }
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchUser();
@@ -33,15 +41,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (name, email, password, role) => {
-    const data = await authService.login(email || 'admin@boardfinder.lk', password || '123');
-    data.user.role = role || 'student';
-    data.user.name = name;
-    
-    if (role === 'owner') {
-      data.user.isVerified = false;
-      data.user.verificationStatus = 'unverified';
-    }
-    
+    const data = await authService.register({ name, email, password, role });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setToken(data.token);
@@ -50,13 +50,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async (idToken, role) => {
-    const data = await authService.login('admin@boardfinder.lk', '123');
-    data.user.role = role || 'student';
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    setToken(data.token);
-    setUser(data.user);
-    return data.user;
+    // Currently fallback since Google auth endpoint isn't fully set up in backend
+    // You will need to implement an authService.googleLogin(idToken, role)
+    throw new Error("Google login not implemented in backend yet");
   };
 
   const logout = () => {

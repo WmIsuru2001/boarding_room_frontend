@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '../../services/adminService';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '../../utils/imageHelper';
 
 export default function AdminListingsPage() {
   const { t } = useTranslation();
@@ -13,39 +14,32 @@ export default function AdminListingsPage() {
   const [selectedListing, setSelectedListing] = useState(null);
 
   useEffect(() => { 
-    adminService.getPendingVerifications().then(data => { 
-      // Ensure we have some mock pending listings if the db is empty or they are all approved
-      if (data.length === 0) {
-        setPending([
-          {
-            id: 'mock-pend-1', title: 'Luxury Studio Near Campus', price: 25000,
-            ownerId: 'owner2', address: '12 Beach Road, Trincomalee',
-            description: 'A beautiful newly renovated studio with AC and private bathroom. Perfect for students who need a quiet place to study. Just 5 minutes away from the university gates.',
-            facilities: ['wifi', 'ac', 'bathroom', 'furnished'],
-            images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600']
-          }
-        ]);
-      } else {
-        setPending(data);
-      }
+    adminService.getPendingListings().then(data => { 
+      setPending(data || []);
       setLoading(false); 
     }); 
   }, []);
 
   const handleApprove = async (id) => {
-    // try to approve via service if it's not our mock
-    if (!id.toString().startsWith('mock-')) {
-      await adminService.approveListing(id);
+    try {
+      await adminService.reviewListing(id, 'approve', 'Looks good');
+      setPending(prev => prev.filter(l => l._id !== id));
+      setSelectedListing(null);
+      toast.success('Listing approved and is now public!');
+    } catch (err) {
+      toast.error('Failed to approve listing');
     }
-    setPending(prev => prev.filter(l => l.id !== id));
-    setSelectedListing(null);
-    toast.success('Listing approved and is now public!');
   };
 
-  const handleReject = (id) => {
-    setPending(prev => prev.filter(l => l.id !== id));
-    setSelectedListing(null);
-    toast.success('Listing rejected.');
+  const handleReject = async (id) => {
+    try {
+      await adminService.reviewListing(id, 'reject', 'Does not meet guidelines');
+      setPending(prev => prev.filter(l => l._id !== id));
+      setSelectedListing(null);
+      toast.success('Listing rejected.');
+    } catch (err) {
+      toast.error('Failed to reject listing');
+    }
   };
 
   const sidebarItems = [
@@ -85,13 +79,13 @@ export default function AdminListingsPage() {
                   <thead><tr><th>Room Title & Info</th><th>Price</th><th>Owner</th><th>Actions</th></tr></thead>
                   <tbody>
                     {pending.map(l => (
-                      <tr key={l.id}>
+                      <tr key={l._id}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{l.title}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{l.address || 'Address not specified'}</div>
                         </td>
                         <td>Rs. {l.price?.toLocaleString()}</td>
-                        <td>{l.ownerId}</td>
+                        <td>{l.owner?.name || l.ownerId}</td>
                         <td>
                           <button className="btn btn-secondary btn-sm" onClick={() => setSelectedListing(l)}>
                             <FiEye size={14} /> Review Listing
@@ -128,8 +122,8 @@ export default function AdminListingsPage() {
                     </h3>
                     <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '8px', fontSize: '0.9rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Owner ID:</span>
-                        <span style={{ fontWeight: 600 }}>{selectedListing.ownerId}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>Owner Name:</span>
+                        <span style={{ fontWeight: 600 }}>{selectedListing.owner?.name || selectedListing.ownerId}</span>
                         
                         <span style={{ color: 'var(--text-muted)' }}>Price:</span>
                         <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Rs. {selectedListing.price?.toLocaleString()}/mo</span>
@@ -159,14 +153,14 @@ export default function AdminListingsPage() {
                 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: 4, height: 14, background: 'var(--primary)', borderRadius: 2 }}></span> Photos ({selectedListing.images?.length || 0})
+                    <span style={{ width: 4, height: 14, background: 'var(--primary)', borderRadius: 2 }}></span> Photos ({(selectedListing.photos || selectedListing.images)?.length || 0})
                   </h3>
                   <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', height: '280px', overflowY: 'auto' }}>
-                    {selectedListing.images?.length > 0 ? (
+                    {(selectedListing.photos || selectedListing.images)?.length > 0 ? (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
-                        {selectedListing.images.map((img, i) => (
+                        {(selectedListing.photos || selectedListing.images).map((img, i) => (
                           <div key={i} style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)', aspectRatio: '4/3' }}>
-                            <img src={img} alt={`Room ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'pointer' }} onClick={() => window.open(img, '_blank')} title="Click to view full image" />
+                            <img src={getImageUrl(img)} alt={`Room ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', cursor: 'pointer' }} onClick={() => window.open(getImageUrl(img), '_blank')} title="Click to view full image" />
                           </div>
                         ))}
                       </div>
@@ -180,10 +174,10 @@ export default function AdminListingsPage() {
               </div>
 
               <div className="flex gap-3" style={{ marginTop: 'var(--space-6)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--border)', justifyContent: 'flex-end' }}>
-                <button className="btn btn-danger" onClick={() => handleReject(selectedListing.id)} style={{ minWidth: 100 }}>
+                <button className="btn btn-danger" onClick={() => handleReject(selectedListing._id || selectedListing.id)} style={{ minWidth: 100 }}>
                   <FiX size={16} /> Reject
                 </button>
-                <button className="btn btn-success" onClick={() => handleApprove(selectedListing.id)} style={{ minWidth: 140 }}>
+                <button className="btn btn-success" onClick={() => handleApprove(selectedListing._id || selectedListing.id)} style={{ minWidth: 140 }}>
                   <FiCheck size={16} /> Approve & Publish
                 </button>
               </div>

@@ -1,21 +1,19 @@
-import { users } from '../mockData/mockDb';
+import api from './api';
 
 export const authService = {
-  login: (email, password) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const user = users.find(u => u.email === email);
-        if (user) {
-          resolve({ token: "mock-jwt-token-12345", user });
-        } else {
-          reject(new Error("Invalid credentials"));
-        }
-      }, 500);
-    });
+  login: async (email, password) => {
+    return await api.post('/auth/login', { email, password });
   },
-  getCurrentUser: () => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(null), 500);
+  register: async (userData) => {
+    return await api.post('/auth/register', userData);
+  },
+  getCurrentUser: async () => {
+    return await api.get('/auth/me');
+  },
+  uploadVerification: async (formData) => {
+    // Requires multipart/form-data, but Axios handles FormData automatically
+    return await api.post('/auth/verify', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
   }
 };

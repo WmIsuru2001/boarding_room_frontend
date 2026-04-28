@@ -1,27 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiShield, FiCheck, FiX, FiEye, FiHome, FiUsers, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { adminService } from '../../services/adminService';
 import toast from 'react-hot-toast';
 
 export default function AdminVerificationsPage() {
   const { t } = useTranslation();
-  const [verifications, setVerifications] = useState([
-    { id: 1, name: 'Amila Perera', email: 'amila@example.com', role: 'owner', document: 'NIC & Utility Bill', submittedAt: '2026-04-26', nicImg: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400', billImg: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400' },
-    { id: 2, name: 'Sunil Shantha', email: 'sunil@example.com', role: 'owner', document: 'NIC & Utility Bill', submittedAt: '2026-04-27', nicImg: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400', billImg: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400' },
-  ]);
+  const [verifications, setVerifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminService.getPendingVerifications().then(data => {
+      setVerifications(data || []);
+      setLoading(false);
+    });
+  }, []);
 
   const [selectedDoc, setSelectedDoc] = useState(null);
 
-  const handleApprove = (id) => {
-    setVerifications(prev => prev.filter(v => v.id !== id));
-    toast.success('Owner account verified successfully!');
+  const handleApprove = async (id) => {
+    try {
+      await adminService.reviewVerification(id, 'approve');
+      setVerifications(prev => prev.filter(v => v._id !== id));
+      toast.success('Owner account verified successfully!');
+    } catch (err) { toast.error('Failed to verify'); }
   };
 
-  const handleReject = (id) => {
-    setVerifications(prev => prev.filter(v => v.id !== id));
-    toast.success('Verification rejected.');
+  const handleReject = async (id) => {
+    try {
+      await adminService.reviewVerification(id, 'reject', 'Invalid documents');
+      setVerifications(prev => prev.filter(v => v._id !== id));
+      toast.success('Verification rejected.');
+    } catch (err) { toast.error('Failed to reject'); }
   };
 
   const sidebarItems = [
@@ -32,6 +44,8 @@ export default function AdminVerificationsPage() {
     { to: '/admin/reports', label: t('admin.reports'), icon: <FiAlertTriangle size={16} /> },
     { to: '/admin/universities', label: t('admin.universities'), icon: <FiHome size={16} /> },
   ];
+
+  if (loading) return <div className="loading-screen"><div className="spinner spinner-lg" /></div>;
 
   return (
     <div className="page-container">
@@ -59,7 +73,7 @@ export default function AdminVerificationsPage() {
                   <thead><tr><th>Owner Info</th><th>Documents</th><th>Submitted</th><th>Actions</th></tr></thead>
                   <tbody>
                     {verifications.map(u => (
-                      <tr key={u.id}>
+                      <tr key={u._id}>
                         <td>
                           <div style={{ fontWeight: 600 }}>{u.name}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{u.email}</div>
@@ -69,11 +83,11 @@ export default function AdminVerificationsPage() {
                             <FiEye size={14} /> View Documents
                           </button>
                         </td>
-                        <td>{u.submittedAt}</td>
+                        <td>{new Date(u.createdAt).toLocaleDateString() || u.submittedAt}</td>
                         <td>
                           <div className="flex gap-2">
-                            <button className="btn btn-success btn-sm" onClick={() => handleApprove(u.id)}><FiCheck size={14} /> Approve</button>
-                            <button className="btn btn-danger btn-sm" onClick={() => handleReject(u.id)}><FiX size={14} /> Reject</button>
+                            <button className="btn btn-success btn-sm" onClick={() => handleApprove(u._id)}><FiCheck size={14} /> Approve</button>
+                            <button className="btn btn-danger btn-sm" onClick={() => handleReject(u._id)}><FiX size={14} /> Reject</button>
                           </div>
                         </td>
                       </tr>
@@ -105,7 +119,7 @@ export default function AdminVerificationsPage() {
                     <span style={{ width: 4, height: 14, background: 'var(--primary)', borderRadius: 2 }}></span> National ID Card
                   </h3>
                   <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)', height: 260, border: '1px solid var(--border)', overflow: 'hidden' }}>
-                    <img src={selectedDoc.nicImg} alt="NIC" style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} onClick={() => window.open(selectedDoc.nicImg, '_blank')} title="Click to view full image" />
+                    <img src={selectedDoc.nicImage ? `http://localhost:5000${selectedDoc.nicImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'} alt="NIC" style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} onClick={() => window.open(selectedDoc.nicImage ? `http://localhost:5000${selectedDoc.nicImage}` : '', '_blank')} title="Click to view full image" />
                   </div>
                 </div>
                 <div>
@@ -113,16 +127,16 @@ export default function AdminVerificationsPage() {
                     <span style={{ width: 4, height: 14, background: 'var(--primary)', borderRadius: 2 }}></span> Utility Bill
                   </h3>
                   <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)', height: 260, border: '1px solid var(--border)', overflow: 'hidden' }}>
-                    <img src={selectedDoc.billImg} alt="Utility Bill" style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} onClick={() => window.open(selectedDoc.billImg, '_blank')} title="Click to view full image" />
+                    <img src={selectedDoc.utilityBillImage ? `http://localhost:5000${selectedDoc.utilityBillImage}` : 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400'} alt="Utility Bill" style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} onClick={() => window.open(selectedDoc.utilityBillImage ? `http://localhost:5000${selectedDoc.utilityBillImage}` : '', '_blank')} title="Click to view full image" />
                   </div>
                 </div>
               </div>
               
               <div className="flex gap-3" style={{ marginTop: 'var(--space-6)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--border)', justifyContent: 'flex-end' }}>
-                <button className="btn btn-danger" onClick={() => { handleReject(selectedDoc.id); setSelectedDoc(null); }} style={{ minWidth: 100 }}>
+                <button className="btn btn-danger" onClick={() => { handleReject(selectedDoc._id); setSelectedDoc(null); }} style={{ minWidth: 100 }}>
                   <FiX size={16} /> Reject
                 </button>
-                <button className="btn btn-success" onClick={() => { handleApprove(selectedDoc.id); setSelectedDoc(null); }} style={{ minWidth: 140 }}>
+                <button className="btn btn-success" onClick={() => { handleApprove(selectedDoc._id); setSelectedDoc(null); }} style={{ minWidth: 140 }}>
                   <FiCheck size={16} /> Approve
                 </button>
               </div>

@@ -9,20 +9,28 @@ import { listingService } from '../services/listingService';
 export default function HomePage() {
   const { t } = useTranslation();
   const [listings, setListings] = useState([]);
+  const [platformStats, setPlatformStats] = useState({ activeStudents: 0, verifiedListings: 0, totalReviews: 0, verifiedOwners: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listingService.getAllListings().then(data => { setListings(data); setLoading(false); }).catch(() => setLoading(false));
+    Promise.all([
+      listingService.getAllListings().catch(() => []),
+      listingService.getPlatformStats().catch(() => ({ activeStudents: 250, verifiedListings: 3, totalReviews: 180, verifiedOwners: 15 }))
+    ]).then(([listingsData, statsData]) => {
+      setListings(listingsData || []);
+      if (statsData) setPlatformStats(statsData);
+      setLoading(false);
+    });
   }, []);
 
   const topRated = [...listings].sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)).slice(0, 3);
   const recent = [...listings].sort((a, b) => b.id?.localeCompare(a.id)).slice(0, 3);
 
   const stats = [
-    { icon: <FiUsers size={24} />, value: '250+', label: t('home.statsStudents'), color: '#4F46E5', bg: '#EEF2FF' },
-    { icon: <FiHome size={24} />, value: listings.length + '+', label: t('home.statsListings'), color: '#0EA5E9', bg: '#F0F9FF' },
-    { icon: <FiStar size={24} />, value: '180+', label: t('home.statsReviews'), color: '#F59E0B', bg: '#FFFBEB' },
-    { icon: <FiShield size={24} />, value: '15+', label: t('home.statsOwners'), color: '#10B981', bg: '#ECFDF5' },
+    { icon: <FiUsers size={24} />, value: `${platformStats.activeStudents}+`, label: t('home.statsStudents'), color: '#4F46E5', bg: '#EEF2FF' },
+    { icon: <FiHome size={24} />, value: `${platformStats.verifiedListings}+`, label: t('home.statsListings'), color: '#0EA5E9', bg: '#F0F9FF' },
+    { icon: <FiStar size={24} />, value: `${platformStats.totalReviews}+`, label: t('home.statsReviews'), color: '#F59E0B', bg: '#FFFBEB' },
+    { icon: <FiShield size={24} />, value: `${platformStats.verifiedOwners}+`, label: t('home.statsOwners'), color: '#10B981', bg: '#ECFDF5' },
   ];
 
   return (

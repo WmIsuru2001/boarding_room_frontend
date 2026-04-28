@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
+import { listingService } from '../../services/listingService';
 
 export default function AddListingPage() {
   const { t } = useTranslation();
@@ -19,7 +20,7 @@ export default function AddListingPage() {
   const [facilities, setFacilities] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [photoPreviews, setPhotoPreviews] = useState([]);
-  
+
   // Default to Eastern University Trincomalee Campus
   const [mapLocation, setMapLocation] = useState({ lat: 8.5874, lng: 81.2152 });
 
@@ -27,10 +28,35 @@ export default function AddListingPage() {
 
   const toggleFacility = (f) => setFacilities(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.success('Listing submitted for admin approval!');
-    navigate('/owner/dashboard');
+    if (photos.length === 0) {
+      toast.error('Please upload at least one photo');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('price', price);
+      formData.append('deposit', deposit || 0);
+      formData.append('address', address);
+      formData.append('roomType', roomType);
+      formData.append('coordinates', JSON.stringify(mapLocation));
+      formData.append('facilities', JSON.stringify(facilities));
+      formData.append('tenantPreferences', JSON.stringify({ gender: gender }));
+
+      photos.forEach(photo => {
+        formData.append('photos', photo);
+      });
+
+      await listingService.createListing(formData);
+      toast.success('Listing submitted for admin approval!');
+      navigate('/owner/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit listing');
+    }
   };
 
   const handlePhotoChange = (e) => {
@@ -40,7 +66,7 @@ export default function AddListingPage() {
       return;
     }
     setPhotos(prev => [...prev, ...files]);
-    
+
     // Create previews
     const newPreviews = files.map(file => URL.createObjectURL(file));
     setPhotoPreviews(prev => [...prev, ...newPreviews]);
@@ -102,17 +128,17 @@ export default function AddListingPage() {
 
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>
             <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-5)' }}><FiImage style={{ display: 'inline' }} /> {t('owner.uploadPhotos')}</h3>
-            
+
             <div style={{ marginBottom: 'var(--space-4)' }}>
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*" 
-                id="photo-upload" 
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                id="photo-upload"
                 style={{ display: 'none' }}
                 onChange={handlePhotoChange}
               />
-              <label 
+              <label
                 htmlFor="photo-upload"
                 style={{ display: 'block', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-8)', textAlign: 'center', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}
                 onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
@@ -132,7 +158,7 @@ export default function AddListingPage() {
                 {photoPreviews.map((preview, idx) => (
                   <div key={idx} style={{ position: 'relative', paddingTop: '100%' }}>
                     <img src={preview} alt={`Preview ${idx}`} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-                    <button 
+                    <button
                       type="button"
                       onClick={() => removePhoto(idx)}
                       style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px' }}
@@ -147,26 +173,26 @@ export default function AddListingPage() {
 
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>
             <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-5)' }}><FiMapPin style={{ display: 'inline' }} /> Location & Map</h3>
-            
+
             <div className="grid-2" style={{ marginBottom: 'var(--space-4)' }}>
               <div className="form-group">
                 <label className="form-label">Latitude</label>
-                <input 
-                  className="form-input" 
-                  type="number" 
+                <input
+                  className="form-input"
+                  type="number"
                   step="any"
-                  value={mapLocation.lat} 
-                  onChange={e => setMapLocation(prev => ({ ...prev, lat: parseFloat(e.target.value) || 0 }))} 
+                  value={mapLocation.lat}
+                  onChange={e => setMapLocation(prev => ({ ...prev, lat: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Longitude</label>
-                <input 
-                  className="form-input" 
-                  type="number" 
+                <input
+                  className="form-input"
+                  type="number"
                   step="any"
-                  value={mapLocation.lng} 
-                  onChange={e => setMapLocation(prev => ({ ...prev, lng: parseFloat(e.target.value) || 0 }))} 
+                  value={mapLocation.lng}
+                  onChange={e => setMapLocation(prev => ({ ...prev, lng: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
             </div>

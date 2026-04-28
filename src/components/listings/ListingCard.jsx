@@ -2,11 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { FiHeart, FiMapPin, FiStar, FiEye } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { getImageUrl } from '../../utils/imageHelper';
 
 export default function ListingCard({ listing, index = 0 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const img = listing.images?.[0] || listing.photos?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80';
+  const rawImg = listing.images?.[0] || listing.photos?.[0];
+  const img = getImageUrl(rawImg);
   const statusColors = { available: 'badge-success', occupied: 'badge-danger', pending: 'badge-warning' };
 
   return (

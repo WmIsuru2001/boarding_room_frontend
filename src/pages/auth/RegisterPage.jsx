@@ -52,19 +52,19 @@ export default function RegisterPage() {
             <div className="role-name">{t('auth.asOwner')}</div>
           </div>
         </div>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <div className="form-group">
             <label className="form-label"><FiUser size={14} style={{ display: 'inline', marginRight: 6 }} />{t('auth.name')}</label>
-            <input className="form-input" value={name} onChange={e => setName(e.target.value)} required placeholder="Amila Perera" />
+            <input className="form-input" value={name} onChange={e => setName(e.target.value)} required placeholder="Amila Perera" autoComplete="new-password" />
           </div>
           <div className="form-group">
             <label className="form-label"><FiMail size={14} style={{ display: 'inline', marginRight: 6 }} />{t('auth.email')}</label>
-            <input className="form-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@esn.ac.lk" />
+            <input className="form-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@esn.ac.lk" autoComplete="new-password" />
           </div>
           <div className="form-group">
             <label className="form-label"><FiLock size={14} style={{ display: 'inline', marginRight: 6 }} />{t('auth.password')}</label>
             <div style={{ position: 'relative' }}>
-              <input className="form-input" type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+              <input className="form-input" type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" autoComplete="new-password" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>
                 {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
               </button>
@@ -73,7 +73,7 @@ export default function RegisterPage() {
           <div className="form-group">
             <label className="form-label"><FiLock size={14} style={{ display: 'inline', marginRight: 6 }} />{t('auth.confirmPassword')}</label>
             <div style={{ position: 'relative' }}>
-              <input className="form-input" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="••••••••" />
+              <input className="form-input" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="••••••••" autoComplete="new-password" />
               <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0 }}>
                 {showConfirmPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
               </button>

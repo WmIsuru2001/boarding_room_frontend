@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FiMapPin, FiStar, FiHeart, FiPhone, FiShield, FiEye, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiMapPin, FiStar, FiHeart, FiPhone, FiShield, FiEye, FiChevronLeft, FiChevronRight, FiTrash2 } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import { listingService } from '../services/listingService';
 import { reviews as mockReviews } from '../mockData/mockDb';
 import { getImageUrl } from '../utils/imageHelper';
@@ -17,12 +18,19 @@ export default function ListingDetailPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [showPhone, setShowPhone] = useState(false);
-  const { profile, updateProfile, isStudent } = useAuth();
+  const { user, profile, updateProfile, isStudent } = useAuth();
+  
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
-    listingService.getListingById(id).then(data => {
-      setListing(data);
-      setReviews(mockReviews.filter(r => r.listingId === id));
+    Promise.all([
+      listingService.getListingById(id),
+      listingService.getReviews(id)
+    ]).then(([listingData, reviewsData]) => {
+      setListing(listingData);
+      setReviews(reviewsData);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
@@ -44,6 +52,33 @@ export default function ListingDetailPage() {
       toast.success(res.isFavorite ? 'Added to saved rooms' : 'Removed from saved rooms');
     } catch (err) {
       toast.error('Failed to update favorites');
+    }
+  };
+
+  const submitReview = async () => {
+    if (!newComment.trim()) return toast.error('Please write a comment');
+    setSubmittingReview(true);
+    try {
+      const review = await listingService.createReview(id, { rating: newRating, comment: newComment });
+      setReviews([review, ...reviews]);
+      setNewComment('');
+      setNewRating(5);
+      toast.success('Review added successfully!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+    try {
+      await listingService.deleteReview(reviewId);
+      setReviews(reviews.filter(r => (r._id || r.id) !== reviewId));
+      toast.success('Review deleted');
+    } catch (err) {
+      toast.error('Failed to delete review');
     }
   };
 
@@ -113,23 +148,92 @@ export default function ListingDetailPage() {
               </>
             )}
 
-            {/* Reviews */}
-            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-4)' }}>{t('listing.reviews')} ({reviews.length})</h3>
-            {reviews.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)' }}>No reviews yet</p>
-            ) : (
-              <div className="flex-col gap-4">
-                {reviews.map(r => (
-                  <div key={r.id} className="card" style={{ padding: 'var(--space-4)' }}>
-                    <div className="flex items-center gap-2" style={{ marginBottom: 'var(--space-2)' }}>
-                      <div className="rating">{[1,2,3,4,5].map(s => <FiStar key={s} size={14} className={`star ${s <= r.rating ? '' : 'empty'}`} style={s <= r.rating ? { fill: 'var(--accent)', color: 'var(--accent)' } : {}} />)}</div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(r.createdAt).toLocaleDateString()}</span>
+            {/* Location Map */}
+            {listing.location?.coordinates && (
+              <div style={{ marginBottom: 'var(--space-8)' }}>
+                <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-4)' }}>Location Map</h3>
+                <div className="map-container" style={{ height: 300, background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                  {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
+                    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                      <Map
+                        defaultCenter={{ lat: listing.location.coordinates[1], lng: listing.location.coordinates[0] }}
+                        defaultZoom={15}
+                        gestureHandling={'greedy'}
+                        disableDefaultUI={true}
+                      >
+                        <Marker position={{ lat: listing.location.coordinates[1], lng: listing.location.coordinates[0] }} />
+                      </Map>
+                    </APIProvider>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                      <p style={{ color: 'var(--text-muted)' }}>📍 Map view not available (API Key Required)</p>
                     </div>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{r.comment}</p>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Reviews */}
+            <div style={{ marginTop: 'var(--space-8)' }}>
+              <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-4)' }}>{t('listing.reviews')} ({reviews.length})</h3>
+              
+              {isStudent && (
+                <div className="card" style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-6)', background: 'var(--bg-tertiary)', border: 'none' }}>
+                  <h4 style={{ fontWeight: 700, marginBottom: 'var(--space-3)', fontSize: '1rem' }}>Write a Review</h4>
+                  <div className="flex items-center gap-1" style={{ marginBottom: 'var(--space-3)' }}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <FiStar 
+                        key={s} 
+                        size={20} 
+                        style={{ cursor: 'pointer', fill: s <= newRating ? 'var(--accent)' : 'transparent', color: s <= newRating ? 'var(--accent)' : 'var(--border)' }} 
+                        onClick={() => setNewRating(s)} 
+                      />
+                    ))}
+                  </div>
+                  <textarea 
+                    className="form-textarea" 
+                    placeholder="Share your experience with this room..." 
+                    value={newComment} 
+                    onChange={e => setNewComment(e.target.value)} 
+                    style={{ marginBottom: 'var(--space-3)', minHeight: '80px' }} 
+                  />
+                  <button className="btn btn-primary" onClick={submitReview} disabled={submittingReview}>
+                    {submittingReview ? 'Submitting...' : 'Post Review'}
+                  </button>
+                </div>
+              )}
+
+              {reviews.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)' }}>No reviews yet. Be the first to review!</p>
+              ) : (
+                <div className="flex-col gap-4">
+                  {reviews.map(r => (
+                    <div key={r._id || r.id} className="card" style={{ padding: 'var(--space-4)' }}>
+                      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-3)' }}>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar avatar-sm flex items-center justify-center">{r.student?.name?.charAt(0) || 'S'}</div>
+                          <div>
+                            <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{r.student?.name || 'Student'}</p>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <div className="rating flex items-center gap-2">
+                          <div>
+                            {[1,2,3,4,5].map(s => <FiStar key={s} size={14} className={`star ${s <= r.rating ? '' : 'empty'}`} style={s <= r.rating ? { fill: 'var(--accent)', color: 'var(--accent)' } : { color: 'var(--border)' }} />)}
+                          </div>
+                          {(user?._id === r.student?._id || user?.id === r.student?._id) && (
+                            <button onClick={() => handleDeleteReview(r._id || r.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Delete Review">
+                              <FiTrash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{r.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}

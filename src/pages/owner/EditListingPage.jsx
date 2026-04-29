@@ -162,7 +162,7 @@ export default function EditListingPage() {
               <div className="form-group"><label className="form-label">{t('owner.roomType')}</label>
                 <select className="form-select" value={roomType} onChange={e => setRoomType(e.target.value)}>
                   <option value="single">{t('listing.single')}</option><option value="shared">{t('listing.shared')}</option>
-                  <option value="studio">{t('listing.studio')}</option><option value="apartment">{t('listing.apartment')}</option>
+                  <option value="full house">Full House</option>
                 </select>
               </div>
               <div className="form-group"><label className="form-label">{t('owner.gender')}</label>

@@ -60,5 +60,17 @@ export const listingService = {
   deleteListing: async (id) => {
     const res = await api.delete(`/listings/${id}`);
     return res.data;
+  },
+  getReviews: async (listingId) => {
+    const res = await api.get(`/reviews/${listingId}`);
+    return res.reviews || [];
+  },
+  createReview: async (listingId, data) => {
+    const res = await api.post(`/reviews/${listingId}`, data);
+    return res.review;
+  },
+  deleteReview: async (reviewId) => {
+    const res = await api.delete(`/reviews/${reviewId}`);
+    return res.data;
   }
 };

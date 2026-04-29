@@ -11,7 +11,7 @@ export default function SearchFilter({ onFilter, initialSearch = '' }) {
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const allFacilities = ['wifi', 'ac', 'kitchen', 'bathroom', 'parking', 'furnished', 'water', 'electricity', 'security'];
+  const allFacilities = ['kitchen', 'bathroom', 'parking', 'furnished', 'water', 'electricity', 'security'];
 
   const toggleFacility = (f) => {
     setSelectedFacilities(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
@@ -37,8 +37,7 @@ export default function SearchFilter({ onFilter, initialSearch = '' }) {
           <option value="">{t('filter.allTypes')}</option>
           <option value="single">{t('listing.single')}</option>
           <option value="shared">{t('listing.shared')}</option>
-          <option value="studio">{t('listing.studio')}</option>
-          <option value="apartment">{t('listing.apartment')}</option>
+          <option value="full house">Full House</option>
         </select>
         <input className="form-input" type="number" placeholder={t('filter.priceRange')} value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ maxWidth: 160 }} />
         <select className="form-select" value={maxDistance} onChange={e => setMaxDistance(e.target.value)} style={{ minWidth: 140 }}>

@@ -17,9 +17,7 @@ export default function AdminDashboardPage() {
     { to: '/admin', label: t('admin.overview'), icon: <FiHome size={16} />, active: true },
     { to: '/admin/verifications', label: t('admin.verifications'), icon: <FiShield size={16} /> },
     { to: '/admin/users', label: t('admin.users'), icon: <FiUsers size={16} /> },
-    { to: '/admin/listings', label: t('admin.listings'), icon: <FiCheckCircle size={16} /> },
-    { to: '/admin/reports', label: t('admin.reports'), icon: <FiAlertTriangle size={16} /> },
-    { to: '/admin/universities', label: t('admin.universities'), icon: <FiHome size={16} /> },
+    { to: '/admin/listings', label: t('admin.listings'), icon: <FiCheckCircle size={16} /> }
   ];
 
   if (loading) return <div className="loading-screen"><div className="spinner spinner-lg" /></div>;
@@ -47,7 +45,6 @@ export default function AdminDashboardPage() {
                 <div className="flex-col gap-3">
                   <Link to="/admin/verifications" className="btn btn-secondary w-full"><FiShield size={14} /> Review Verifications ({stats?.stats?.pendingVerifications || 0})</Link>
                   <Link to="/admin/listings" className="btn btn-secondary w-full"><FiCheckCircle size={14} /> Approve Listings ({stats?.stats?.pendingListings || 0})</Link>
-                  <Link to="/admin/reports" className="btn btn-secondary w-full"><FiAlertTriangle size={14} /> View Reports ({stats?.stats?.pendingReports || 0})</Link>
                 </div>
               </div>
               <div className="card" style={{ padding: 'var(--space-6)' }}>

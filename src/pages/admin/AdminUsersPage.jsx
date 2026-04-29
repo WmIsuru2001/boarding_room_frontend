@@ -33,9 +33,7 @@ export default function AdminUsersPage() {
     { to: '/admin', label: t('admin.overview'), icon: <FiHome size={16} /> },
     { to: '/admin/verifications', label: t('admin.verifications'), icon: <FiShield size={16} /> },
     { to: '/admin/users', label: t('admin.users'), icon: <FiUsers size={16} />, active: true },
-    { to: '/admin/listings', label: t('admin.listings'), icon: <FiCheckCircle size={16} /> },
-    { to: '/admin/reports', label: t('admin.reports'), icon: <FiAlertTriangle size={16} /> },
-    { to: '/admin/universities', label: t('admin.universities'), icon: <FiHome size={16} /> },
+    { to: '/admin/listings', label: t('admin.listings'), icon: <FiCheckCircle size={16} /> }
   ];
 
   if (loading) return <div className="loading-screen"><div className="spinner spinner-lg" /></div>;

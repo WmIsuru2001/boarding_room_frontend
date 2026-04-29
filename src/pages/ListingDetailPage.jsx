@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { listingService } from '../services/listingService';
 import { reviews as mockReviews } from '../mockData/mockDb';
 import { getImageUrl } from '../utils/imageHelper';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -14,6 +16,8 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
   const [reviews, setReviews] = useState([]);
+  const [showPhone, setShowPhone] = useState(false);
+  const { profile, updateProfile, isStudent } = useAuth();
 
   useEffect(() => {
     listingService.getListingById(id).then(data => {
@@ -28,6 +32,20 @@ export default function ListingDetailPage() {
 
   const rawImgs = listing.images || listing.photos || [];
   const imgs = rawImgs.length > 0 ? rawImgs.map(img => getImageUrl(img)) : [getImageUrl(null)];
+  
+  const listingId = listing.id || listing._id;
+  const isFavorited = profile?.favorites?.some(f => (f._id || f) === listingId);
+
+  const handleFavorite = async () => {
+    if (!isStudent) return toast.error('Only students can save rooms!');
+    try {
+      const res = await listingService.toggleFavorite(listingId);
+      updateProfile({ favorites: res.favorites });
+      toast.success(res.isFavorite ? 'Added to saved rooms' : 'Removed from saved rooms');
+    } catch (err) {
+      toast.error('Failed to update favorites');
+    }
+  };
 
   return (
     <div className="detail-page">
@@ -45,7 +63,10 @@ export default function ListingDetailPage() {
             </>
           )}
           <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
-            <button className="btn btn-secondary btn-sm"><FiHeart size={14} /> {t('listing.addToFav')}</button>
+            <button className="btn btn-secondary btn-sm" onClick={handleFavorite}>
+              <FiHeart size={14} style={{ fill: isFavorited ? 'var(--danger)' : 'transparent', color: isFavorited ? 'var(--danger)' : 'currentColor' }} /> 
+              {isFavorited ? 'Remove from Favorites' : t('listing.addToFav')}
+            </button>
           </div>
         </div>
 
@@ -128,15 +149,26 @@ export default function ListingDetailPage() {
             <div style={{ padding: '16px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
               <h4 style={{ fontWeight: 700, marginBottom: 'var(--space-3)', fontSize: '0.9rem' }}>{t('listing.ownerInfo')}</h4>
               <div className="flex items-center gap-3">
-                <div className="avatar flex items-center justify-center">K</div>
+                <div className="avatar flex items-center justify-center">{listing.owner?.name?.[0] || 'K'}</div>
                 <div>
-                  <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>Kamal Silva</p>
+                  <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{listing.owner?.name || 'Kamal Silva'}</p>
                   <div className="flex items-center gap-1"><FiShield size={12} style={{ color: 'var(--success)' }} /><span className="badge badge-verified" style={{ fontSize: '0.65rem' }}>{t('listing.verified')}</span></div>
                 </div>
               </div>
             </div>
-            <button className="btn btn-primary w-full" style={{ marginBottom: 'var(--space-3)' }}><FiPhone size={16} /> {t('listing.contactOwner')}</button>
-            <button className="btn btn-outline w-full"><FiHeart size={16} /> {t('listing.addToFav')}</button>
+            {showPhone ? (
+              <a href={`tel:${listing.contactNumber || listing.owner?.phone}`} className="btn btn-primary w-full flex justify-center items-center gap-2" style={{ marginBottom: 'var(--space-3)' }}>
+                <FiPhone size={16} /> {listing.contactNumber || listing.owner?.phone || 'No number available'}
+              </a>
+            ) : (
+              <button onClick={() => setShowPhone(true)} className="btn btn-primary w-full" style={{ marginBottom: 'var(--space-3)' }}>
+                <FiPhone size={16} /> {t('listing.contactOwner')}
+              </button>
+            )}
+            <button className="btn btn-outline w-full" onClick={handleFavorite}>
+              <FiHeart size={16} style={{ fill: isFavorited ? 'var(--danger)' : 'transparent', color: isFavorited ? 'var(--danger)' : 'currentColor' }} /> 
+              {isFavorited ? 'Remove from Favorites' : t('listing.addToFav')}
+            </button>
           </div>
         </div>
       </motion.div>

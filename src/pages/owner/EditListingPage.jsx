@@ -18,6 +18,7 @@ export default function EditListingPage() {
   const [price, setPrice] = useState('');
   const [deposit, setDeposit] = useState('');
   const [address, setAddress] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [roomType, setRoomType] = useState('single');
   const [gender, setGender] = useState('any');
   const [facilities, setFacilities] = useState([]);
@@ -37,6 +38,7 @@ export default function EditListingPage() {
         setPrice(data.price || '');
         setDeposit(data.deposit || '');
         setAddress(data.location?.address || data.address || '');
+        setContactNumber(data.contactNumber || '');
         setRoomType(data.roomType || 'single');
         setGender(data.tenantPreferences?.gender || 'any');
         setFacilities(data.facilities || []);
@@ -63,15 +65,42 @@ export default function EditListingPage() {
 
   const toggleFacility = (f) => setFacilities(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
 
-  const handleSave = (e) => { 
+  const handleSave = async (e) => { 
     e.preventDefault();
-    toast.success('Listing updated successfully!'); 
-    navigate('/owner/dashboard'); 
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('price', price);
+      formData.append('deposit', deposit || 0);
+      formData.append('address', address);
+      formData.append('contactNumber', contactNumber);
+      formData.append('roomType', roomType);
+      formData.append('coordinates', JSON.stringify(mapLocation));
+      formData.append('facilities', JSON.stringify(facilities));
+      formData.append('tenantPreferences', JSON.stringify({ gender: gender }));
+
+      photos.forEach(photo => {
+        formData.append('photos', photo);
+      });
+
+      await listingService.updateListing(id, formData);
+      toast.success('Listing updated successfully!'); 
+      navigate('/owner/dashboard'); 
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update listing');
+    }
   };
   
-  const handleDelete = () => {
-    toast.success('Listing deleted!');
-    navigate('/owner/dashboard');
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    try {
+      await listingService.deleteListing(id);
+      toast.success('Listing deleted!');
+      navigate('/owner/dashboard');
+    } catch (err) {
+      toast.error('Failed to delete listing');
+    }
   };
 
   const handlePhotoChange = (e) => {
@@ -143,6 +172,7 @@ export default function EditListingPage() {
               </div>
             </div>
             <div className="form-group"><label className="form-label">{t('owner.roomAddress')}</label><input className="form-input" value={address} onChange={e => setAddress(e.target.value)} required /></div>
+            <div className="form-group"><label className="form-label">Contact Number</label><input className="form-input" value={contactNumber} onChange={e => setContactNumber(e.target.value)} required placeholder="e.g. 0712345678" /></div>
           </div>
 
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>

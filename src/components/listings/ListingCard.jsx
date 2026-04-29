@@ -1,15 +1,35 @@
 import { useNavigate } from 'react-router-dom';
-import { FiHeart, FiMapPin, FiStar, FiEye } from 'react-icons/fi';
+import { FiHeart, FiMapPin, FiStar, FiEye, FiPhone } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getImageUrl } from '../../utils/imageHelper';
+import { useAuth } from '../../context/AuthContext';
+import { listingService } from '../../services/listingService';
+import toast from 'react-hot-toast';
 
 export default function ListingCard({ listing, index = 0 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { profile, updateProfile, isStudent } = useAuth();
+  
   const rawImg = listing.images?.[0] || listing.photos?.[0];
   const img = getImageUrl(rawImg);
   const statusColors = { available: 'badge-success', occupied: 'badge-danger', pending: 'badge-warning' };
+
+  const listingId = listing.id || listing._id;
+  const isFavorited = profile?.favorites?.some(f => (f._id || f) === listingId);
+
+  const handleFavorite = async (e) => {
+    e.stopPropagation();
+    if (!isStudent) return toast.error('Only students can save rooms!');
+    try {
+      const res = await listingService.toggleFavorite(listingId);
+      updateProfile({ favorites: res.favorites });
+      toast.success(res.isFavorite ? 'Added to saved rooms' : 'Removed from saved rooms');
+    } catch (err) {
+      toast.error('Failed to update favorites');
+    }
+  };
 
   return (
     <motion.div
@@ -27,16 +47,22 @@ export default function ListingCard({ listing, index = 0 }) {
           </span>
           {listing.roomType && <span className="badge badge-outline">{t(`listing.${listing.roomType}`)}</span>}
         </div>
-        <button className="card-fav" onClick={(e) => { e.stopPropagation(); }}>
-          <FiHeart size={16} />
+        <button className="card-fav" onClick={handleFavorite}>
+          <FiHeart size={16} style={{ fill: isFavorited ? 'var(--danger)' : 'transparent', color: isFavorited ? 'var(--danger)' : 'var(--text-primary)' }} />
         </button>
       </div>
       <div className="card-body">
         <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px', lineHeight: 1.3 }}>{listing.title}</h3>
         <div className="flex items-center gap-2" style={{ marginBottom: '8px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
           <FiMapPin size={13} />
-          <span>{listing.location?.address || listing.address}</span>
+          <span className="truncate">{listing.location?.address || listing.address}</span>
         </div>
+        {listing.contactNumber && (
+          <div className="flex items-center gap-2" style={{ marginBottom: '8px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+            <FiPhone size={13} />
+            <span>{listing.contactNumber}</span>
+          </div>
+        )}
         <div className="flex items-center gap-4" style={{ marginBottom: '12px' }}>
           {listing.averageRating > 0 && (
             <div className="flex items-center gap-1">

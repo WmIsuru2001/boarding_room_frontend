@@ -64,10 +64,10 @@ export default function OwnerDashboardPage() {
   const activeCount = listings.filter(l => l.status === 'available' && l.isApproved).length;
 
   const toggleStatus = async (id) => {
-    const listing = listings.find(l => l.id === id);
+    const listing = listings.find(l => (l._id || l.id) === id);
     const newStatus = listing.status === 'available' ? 'occupied' : 'available';
     await listingService.updateListingStatus(id, newStatus);
-    setListings(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l));
+    setListings(prev => prev.map(l => (l._id || l.id) === id ? { ...l, status: newStatus } : l));
     toast.success(`Marked as ${newStatus}`);
   };
 
@@ -131,7 +131,6 @@ export default function OwnerDashboardPage() {
                     <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
                       <h3 style={{ fontWeight: 700 }}>{l.title}</h3>
                       <span className={`badge ${l.status === 'available' ? 'badge-success' : l.status === 'occupied' ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span>
-                      {!l.isApproved && <span className="badge badge-warning">Pending Approval</span>}
                     </div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Rs. {l.price?.toLocaleString()}/month • {l.distance} km from campus</p>
                     <div className="flex items-center gap-4" style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
@@ -140,11 +139,13 @@ export default function OwnerDashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="btn btn-secondary btn-sm" onClick={() => toggleStatus(l.id)}>
-                      {l.status === 'available' ? <FiToggleRight size={16} /> : <FiToggleLeft size={16} />}
-                      {l.status === 'available' ? t('owner.markOccupied') : t('owner.markAvailable')}
-                    </button>
-                    <Link to={`/owner/listings/${l.id}/edit`} className="btn btn-ghost btn-sm"><FiEdit size={14} /></Link>
+                    {(l.status === 'available' || l.status === 'occupied') && (
+                      <button className="btn btn-secondary btn-sm" onClick={() => toggleStatus(l._id || l.id)}>
+                        {l.status === 'available' ? <FiToggleRight size={16} /> : <FiToggleLeft size={16} />}
+                        {l.status === 'available' ? t('owner.markOccupied') : t('owner.markAvailable')}
+                      </button>
+                    )}
+                    <Link to={`/owner/listings/${l._id || l.id}/edit`} className="btn btn-ghost btn-sm"><FiEdit size={14} /></Link>
                   </div>
                 </div>
               </div>

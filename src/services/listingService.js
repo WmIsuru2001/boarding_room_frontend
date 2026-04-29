@@ -27,7 +27,11 @@ export const listingService = {
   },
   toggleFavorite: async (listingId) => {
     const res = await api.post(`/users/favorites/${listingId}`);
-    return res;
+    return res.data || res;
+  },
+  getFavorites: async () => {
+    const res = await api.get('/users/favorites');
+    return res.favorites || [];
   },
   getListingsByOwnerId: async (ownerId) => {
     const res = await api.get(`/listings?ownerId=${ownerId}`);

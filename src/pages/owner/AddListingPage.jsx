@@ -15,6 +15,7 @@ export default function AddListingPage() {
   const [price, setPrice] = useState('');
   const [deposit, setDeposit] = useState('');
   const [address, setAddress] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [roomType, setRoomType] = useState('single');
   const [gender, setGender] = useState('any');
   const [facilities, setFacilities] = useState([]);
@@ -42,6 +43,7 @@ export default function AddListingPage() {
       formData.append('price', price);
       formData.append('deposit', deposit || 0);
       formData.append('address', address);
+      formData.append('contactNumber', contactNumber);
       formData.append('roomType', roomType);
       formData.append('coordinates', JSON.stringify(mapLocation));
       formData.append('facilities', JSON.stringify(facilities));
@@ -115,6 +117,7 @@ export default function AddListingPage() {
               </div>
             </div>
             <div className="form-group"><label className="form-label">{t('owner.roomAddress')}</label><input className="form-input" value={address} onChange={e => setAddress(e.target.value)} required placeholder="15 Temple Road, Trincomalee" /></div>
+            <div className="form-group"><label className="form-label">Contact Number</label><input className="form-input" value={contactNumber} onChange={e => setContactNumber(e.target.value)} required placeholder="e.g. 0712345678" /></div>
           </div>
 
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>

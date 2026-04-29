@@ -100,7 +100,7 @@ export default function ListingDetailPage() {
           <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
             <button className="btn btn-secondary btn-sm" onClick={handleFavorite}>
               <FiHeart size={14} style={{ fill: isFavorited ? 'var(--danger)' : 'transparent', color: isFavorited ? 'var(--danger)' : 'currentColor' }} /> 
-              {isFavorited ? 'Remove from Favorites' : t('listing.addToFav')}
+              {isFavorited ? t('listing.removeFromFav') : t('listing.addToFav')}
             </button>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function ListingDetailPage() {
               )}
             </div>
 
-            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-3)' }}>Description</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-3)' }}>{t('listing.description')}</h3>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: 'var(--space-8)' }}>{listing.description}</p>
 
             <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-3)' }}>{t('listing.facilities')}</h3>
@@ -142,8 +142,12 @@ export default function ListingDetailPage() {
               <>
                 <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-3)' }}>{t('listing.tenantPref')}</h3>
                 <div className="flex gap-2" style={{ flexWrap: 'wrap', marginBottom: 'var(--space-8)' }}>
-                  <span className="tag">{listing.tenantPreferences.gender === 'male' ? t('listing.boysOnly') : listing.tenantPreferences.gender === 'female' ? t('listing.girlsOnly') : t('listing.anyone')}</span>
-                  {listing.tenantPreferences.type !== 'any' && <span className="tag">{listing.tenantPreferences.type}</span>}
+                  <span className="tag">
+                    {listing.tenantPreferences.gender === 'male' || listing.tenantPreferences.gender === 'boys only' ? t('listing.boysOnly') : 
+                     listing.tenantPreferences.gender === 'female' || listing.tenantPreferences.gender === 'girls only' ? t('listing.girlsOnly') : 
+                     t('listing.anyone')}
+                  </span>
+                  {listing.tenantPreferences.type && listing.tenantPreferences.type !== 'any' && <span className="tag">{listing.tenantPreferences.type}</span>}
                 </div>
               </>
             )}
@@ -151,7 +155,7 @@ export default function ListingDetailPage() {
             {/* Location Map */}
             {listing.location?.coordinates && (
               <div style={{ marginBottom: 'var(--space-8)' }}>
-                <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-4)' }}>Location Map</h3>
+                <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-4)' }}>{t('owner.locationMap')}</h3>
                 <div className="map-container" style={{ height: 300, background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                   {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
                     <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
@@ -179,7 +183,7 @@ export default function ListingDetailPage() {
               
               {isStudent && (
                 <div className="card" style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-6)', background: 'var(--bg-tertiary)', border: 'none' }}>
-                  <h4 style={{ fontWeight: 700, marginBottom: 'var(--space-3)', fontSize: '1rem' }}>Write a Review</h4>
+                  <h4 style={{ fontWeight: 700, marginBottom: 'var(--space-3)', fontSize: '1rem' }}>{t('listing.writeReview')}</h4>
                   <div className="flex items-center gap-1" style={{ marginBottom: 'var(--space-3)' }}>
                     {[1, 2, 3, 4, 5].map(s => (
                       <FiStar 
@@ -198,7 +202,11 @@ export default function ListingDetailPage() {
                     style={{ marginBottom: 'var(--space-3)', minHeight: '80px' }} 
                   />
                   <button className="btn btn-primary" onClick={submitReview} disabled={submittingReview}>
-                    {submittingReview ? 'Submitting...' : 'Post Review'}
+                    {submittingReview ? (
+                      <><div className="spinner spinner-sm" style={{ borderTopColor: 'white', marginRight: '8px' }} /> Submitting...</>
+                    ) : (
+                      'Post Review'
+                    )}
                   </button>
                 </div>
               )}
@@ -271,7 +279,7 @@ export default function ListingDetailPage() {
             )}
             <button className="btn btn-outline w-full" onClick={handleFavorite}>
               <FiHeart size={16} style={{ fill: isFavorited ? 'var(--danger)' : 'transparent', color: isFavorited ? 'var(--danger)' : 'currentColor' }} /> 
-              {isFavorited ? 'Remove from Favorites' : t('listing.addToFav')}
+              {isFavorited ? t('listing.removeFromFav') : t('listing.addToFav')}
             </button>
           </div>
         </div>

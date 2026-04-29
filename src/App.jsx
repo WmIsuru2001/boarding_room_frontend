@@ -19,8 +19,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminVerificationsPage from './pages/admin/AdminVerificationsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
-import AdminReportsPage from './pages/admin/AdminReportsPage';
-import AdminUniversitiesPage from './pages/admin/AdminUniversitiesPage';
+
 
 const PrivateRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -58,8 +57,7 @@ function AppRoutes() {
           <Route path="/admin/verifications" element={<PrivateRoute roles={['admin']}><AdminVerificationsPage /></PrivateRoute>} />
           <Route path="/admin/users" element={<PrivateRoute roles={['admin']}><AdminUsersPage /></PrivateRoute>} />
           <Route path="/admin/listings" element={<PrivateRoute roles={['admin']}><AdminListingsPage /></PrivateRoute>} />
-          <Route path="/admin/reports" element={<PrivateRoute roles={['admin']}><AdminReportsPage /></PrivateRoute>} />
-          <Route path="/admin/universities" element={<PrivateRoute roles={['admin']}><AdminUniversitiesPage /></PrivateRoute>} />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

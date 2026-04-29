@@ -21,6 +21,7 @@ export default function AddListingPage() {
   const [facilities, setFacilities] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [photoPreviews, setPhotoPreviews] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   // Default to Eastern University Trincomalee Campus
   const [mapLocation, setMapLocation] = useState({ lat: 8.5874, lng: 81.2152 });
@@ -35,6 +36,8 @@ export default function AddListingPage() {
       toast.error('Please upload at least one photo');
       return;
     }
+
+    setSubmitting(true);
 
     try {
       const formData = new FormData();
@@ -58,6 +61,8 @@ export default function AddListingPage() {
       navigate('/owner/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit listing');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -96,7 +101,7 @@ export default function AddListingPage() {
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 'var(--space-8)' }}>➕ {t('owner.addRoom')}</h1>
         <form onSubmit={handleSubmit}>
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-5)' }}>Basic Information</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-5)' }}>{t('owner.basicInfo')}</h3>
             <div className="form-group"><label className="form-label">{t('owner.roomTitle')}</label><input className="form-input" value={title} onChange={e => setTitle(e.target.value)} required placeholder="e.g. Spacious Room near EUSL" /></div>
             <div className="form-group"><label className="form-label">{t('owner.roomDesc')}</label><textarea className="form-textarea" value={description} onChange={e => setDescription(e.target.value)} required placeholder="Describe your room..." /></div>
             <div className="grid-2">
@@ -107,7 +112,7 @@ export default function AddListingPage() {
               <div className="form-group"><label className="form-label">{t('owner.roomType')}</label>
                 <select className="form-select" value={roomType} onChange={e => setRoomType(e.target.value)}>
                   <option value="single">{t('listing.single')}</option><option value="shared">{t('listing.shared')}</option>
-                  <option value="full house">Full House</option>
+                  <option value="full house">{t('listing.full house')}</option>
                 </select>
               </div>
               <div className="form-group"><label className="form-label">{t('owner.gender')}</label>
@@ -117,7 +122,7 @@ export default function AddListingPage() {
               </div>
             </div>
             <div className="form-group"><label className="form-label">{t('owner.roomAddress')}</label><input className="form-input" value={address} onChange={e => setAddress(e.target.value)} required placeholder="15 Temple Road, Trincomalee" /></div>
-            <div className="form-group"><label className="form-label">Contact Number</label><input className="form-input" value={contactNumber} onChange={e => setContactNumber(e.target.value)} required placeholder="e.g. 0712345678" /></div>
+            <div className="form-group"><label className="form-label">{t('owner.contactInfo')}</label><input className="form-input" value={contactNumber} onChange={e => setContactNumber(e.target.value)} required placeholder="e.g. 0712345678" /></div>
           </div>
 
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>
@@ -175,7 +180,7 @@ export default function AddListingPage() {
           </div>
 
           <div className="card" style={{ padding: 'var(--space-8)', marginBottom: 'var(--space-6)' }}>
-            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-5)' }}><FiMapPin style={{ display: 'inline' }} /> Location & Map</h3>
+            <h3 style={{ fontWeight: 700, marginBottom: 'var(--space-5)' }}><FiMapPin style={{ display: 'inline' }} /> {t('owner.locationMap')}</h3>
 
             <div className="grid-2" style={{ marginBottom: 'var(--space-4)' }}>
               <div className="form-group">
@@ -225,8 +230,14 @@ export default function AddListingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button type="submit" className="btn btn-primary btn-lg"><FiSave size={16} /> {t('owner.saveListing')}</button>
-            <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/owner/dashboard')}>Cancel</button>
+            <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}>
+              {submitting ? (
+                <><div className="spinner spinner-sm" style={{ borderTopColor: 'white' }} /> Processing...</>
+              ) : (
+                <><FiSave size={16} /> {t('owner.saveListing')}</>
+              )}
+            </button>
+            <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/owner/dashboard')} disabled={submitting}>Cancel</button>
           </div>
         </form>
       </motion.div>

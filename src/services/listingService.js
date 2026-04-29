@@ -18,6 +18,7 @@ export const listingService = {
     if (criteria.maxPrice) params.append('maxPrice', criteria.maxPrice);
     if (criteria.maxDistance) params.append('maxDistance', criteria.maxDistance);
     if (criteria.roomType) params.append('roomType', criteria.roomType);
+    if (criteria.gender) params.append('gender', criteria.gender);
     if (criteria.search) params.append('search', criteria.search);
     if (criteria.ownerId) params.append('ownerId', criteria.ownerId);
     if (criteria.facilities?.length) params.append('facilities', criteria.facilities.join(','));

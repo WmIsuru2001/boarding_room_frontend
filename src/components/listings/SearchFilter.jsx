@@ -7,6 +7,7 @@ export default function SearchFilter({ onFilter, initialSearch = '' }) {
   const [search, setSearch] = useState(initialSearch);
   const [maxPrice, setMaxPrice] = useState('');
   const [roomType, setRoomType] = useState('');
+  const [gender, setGender] = useState('');
   const [maxDistance, setMaxDistance] = useState('');
   const [selectedFacilities, setSelectedFacilities] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -18,11 +19,11 @@ export default function SearchFilter({ onFilter, initialSearch = '' }) {
   };
 
   const handleApply = () => {
-    onFilter({ search, maxPrice: maxPrice ? Number(maxPrice) : null, roomType: roomType || null, maxDistance: maxDistance ? Number(maxDistance) : null, facilities: selectedFacilities.length ? selectedFacilities : null });
+    onFilter({ search, maxPrice: maxPrice ? Number(maxPrice) : null, roomType: roomType || null, gender: gender || null, maxDistance: maxDistance ? Number(maxDistance) : null, facilities: selectedFacilities.length ? selectedFacilities : null });
   };
 
   const handleClear = () => {
-    setSearch(''); setMaxPrice(''); setRoomType(''); setMaxDistance(''); setSelectedFacilities([]);
+    setSearch(''); setMaxPrice(''); setRoomType(''); setGender(''); setMaxDistance(''); setSelectedFacilities([]);
     onFilter({});
   };
 
@@ -37,7 +38,12 @@ export default function SearchFilter({ onFilter, initialSearch = '' }) {
           <option value="">{t('filter.allTypes')}</option>
           <option value="single">{t('listing.single')}</option>
           <option value="shared">{t('listing.shared')}</option>
-          <option value="full house">Full House</option>
+          <option value="full house">{t('listing.full house')}</option>
+        </select>
+        <select className="form-select" value={gender} onChange={e => setGender(e.target.value)} style={{ minWidth: 130 }}>
+          <option value="">{t('listing.anyone')}</option>
+          <option value="female">{t('listing.girlsOnly')}</option>
+          <option value="male">{t('listing.boysOnly')}</option>
         </select>
         <input className="form-input" type="number" placeholder={t('filter.priceRange')} value={maxPrice} onChange={e => setMaxPrice(e.target.value)} style={{ maxWidth: 160 }} />
         <select className="form-select" value={maxDistance} onChange={e => setMaxDistance(e.target.value)} style={{ minWidth: 140 }}>

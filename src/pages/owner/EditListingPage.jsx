@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import { listingService } from '../../services/listingService';
+import FullPageLoader from '../../components/layout/FullPageLoader';
 
 export default function EditListingPage() {
   const { t } = useTranslation();
@@ -295,6 +296,13 @@ export default function EditListingPage() {
           </div>
         </form>
       </motion.div>
+
+      {/* Full-page loader during update */}
+      <FullPageLoader 
+        isVisible={submitting} 
+        message="Updating room details..." 
+        blur={true}
+      />
     </div>
   );
 }

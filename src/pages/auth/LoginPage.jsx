@@ -4,6 +4,7 @@ import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import FullPageLoader from '../../components/layout/FullPageLoader';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -60,6 +61,13 @@ export default function LoginPage() {
           {t('auth.noAccount')} <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>{t('auth.register')}</Link>
         </p>
       </motion.div>
+
+      {/* Full-page loader during login */}
+      <FullPageLoader 
+        isVisible={loading} 
+        message="Signing you in..." 
+        blur={true}
+      />
     </div>
   );
 }

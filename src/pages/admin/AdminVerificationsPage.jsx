@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiShield, FiCheck, FiX, FiEye, FiHome, FiUsers, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
+import { FiShield, FiCheck, FiX, FiEye, FiHome, FiUsers, FiAlertTriangle, FiCheckCircle, FiAlertTriangle as FiImageError } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { adminService } from '../../services/adminService';
+import { getVerificationImageUrl } from '../../utils/imageHelper';
 import toast from 'react-hot-toast';
 
 export default function AdminVerificationsPage() {
   const { t } = useTranslation();
   const [verifications, setVerifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState({});
 
   useEffect(() => {
     adminService.getPendingVerifications().then(data => {
@@ -34,6 +36,14 @@ export default function AdminVerificationsPage() {
       setVerifications(prev => prev.filter(v => v._id !== id));
       toast.success('Verification rejected.');
     } catch (err) { toast.error('Failed to reject'); }
+  };
+
+  const handleImageError = (docId, imageType) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [docId]: { ...prev[docId], [imageType]: true }
+    }));
+    toast.error(`Failed to load ${imageType} image`);
   };
 
   const sidebarItems = [
@@ -116,17 +126,57 @@ export default function AdminVerificationsPage() {
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ width: 4, height: 14, background: 'var(--primary)', borderRadius: 2 }}></span> National ID Card
                   </h3>
-                  <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)', height: 260, border: '1px solid var(--border)', overflow: 'hidden' }}>
-                    <img src={selectedDoc.nicImage ? `http://localhost:5000${selectedDoc.nicImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'} alt="NIC" style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} onClick={() => window.open(selectedDoc.nicImage ? `http://localhost:5000${selectedDoc.nicImage}` : '', '_blank')} title="Click to view full image" />
+                  <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)', height: 260, border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {imageErrors[selectedDoc._id]?.nic ? (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <FiImageError size={32} style={{ marginBottom: 'var(--space-2)', opacity: 0.5 }} />
+                        <p style={{ margin: 0, fontSize: '0.9rem' }}>Failed to load image</p>
+                      </div>
+                    ) : (
+                      <img 
+                        src={getVerificationImageUrl(selectedDoc.nicImage, 'nic')} 
+                        alt="National ID Card" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} 
+                        onClick={() => {
+                          const url = getVerificationImageUrl(selectedDoc.nicImage, 'nic');
+                          if (url && !url.includes('placeholder')) window.open(url, '_blank');
+                        }}
+                        onError={() => handleImageError(selectedDoc._id, 'nic')}
+                        title={selectedDoc.nicImage ? "Click to view full image" : "No image uploaded"} 
+                      />
+                    )}
                   </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 'var(--space-1)', margin: 'var(--space-1) 0 0 0' }}>
+                    {selectedDoc.nicImage ? 'Image loaded from Cloudinary' : 'Awaiting upload'}
+                  </p>
                 </div>
                 <div>
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 'var(--space-2)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ width: 4, height: 14, background: 'var(--primary)', borderRadius: 2 }}></span> Utility Bill
                   </h3>
-                  <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)', height: 260, border: '1px solid var(--border)', overflow: 'hidden' }}>
-                    <img src={selectedDoc.utilityBillImage ? `http://localhost:5000${selectedDoc.utilityBillImage}` : 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400'} alt="Utility Bill" style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} onClick={() => window.open(selectedDoc.utilityBillImage ? `http://localhost:5000${selectedDoc.utilityBillImage}` : '', '_blank')} title="Click to view full image" />
+                  <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)', height: 260, border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {imageErrors[selectedDoc._id]?.bill ? (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <FiImageError size={32} style={{ marginBottom: 'var(--space-2)', opacity: 0.5 }} />
+                        <p style={{ margin: 0, fontSize: '0.9rem' }}>Failed to load image</p>
+                      </div>
+                    ) : (
+                      <img 
+                        src={getVerificationImageUrl(selectedDoc.utilityBillImage, 'bill')} 
+                        alt="Utility Bill" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }} 
+                        onClick={() => {
+                          const url = getVerificationImageUrl(selectedDoc.utilityBillImage, 'bill');
+                          if (url && !url.includes('placeholder')) window.open(url, '_blank');
+                        }}
+                        onError={() => handleImageError(selectedDoc._id, 'bill')}
+                        title={selectedDoc.utilityBillImage ? "Click to view full image" : "No image uploaded"} 
+                      />
+                    )}
                   </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 'var(--space-1)', margin: 'var(--space-1) 0 0 0' }}>
+                    {selectedDoc.utilityBillImage ? 'Image loaded from Cloudinary' : 'Awaiting upload'}
+                  </p>
                 </div>
               </div>
               

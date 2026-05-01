@@ -4,6 +4,7 @@ import { FiUser, FiMail, FiLock, FiHome, FiBookOpen, FiEye, FiEyeOff } from 'rea
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import FullPageLoader from '../../components/layout/FullPageLoader';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
@@ -86,6 +87,13 @@ export default function RegisterPage() {
           {t('auth.hasAccount')} <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>{t('auth.login')}</Link>
         </p>
       </motion.div>
+
+      {/* Full-page loader during registration */}
+      <FullPageLoader 
+        isVisible={loading} 
+        message="Creating your account..." 
+        blur={true}
+      />
     </div>
   );
 }

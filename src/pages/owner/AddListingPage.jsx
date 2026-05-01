@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import { listingService } from '../../services/listingService';
+import FullPageLoader from '../../components/layout/FullPageLoader';
 
 export default function AddListingPage() {
   const { t } = useTranslation();
@@ -241,6 +242,13 @@ export default function AddListingPage() {
           </div>
         </form>
       </motion.div>
+
+      {/* Full-page loader during submission */}
+      <FullPageLoader 
+        isVisible={submitting} 
+        message="Uploading room details and photos..." 
+        blur={true}
+      />
     </div>
   );
 }

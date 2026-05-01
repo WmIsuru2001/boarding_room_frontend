@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPlus, FiEye, FiHeart, FiHome, FiEdit, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { FiPlus, FiEye, FiHeart, FiHome, FiEdit, FiToggleLeft, FiToggleRight, FiCalendar, FiX } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { listingService } from '../../services/listingService';
@@ -63,12 +63,47 @@ export default function OwnerDashboardPage() {
   const totalFavs = listings.reduce((s, l) => s + (l.favoriteCount || 0), 0);
   const activeCount = listings.filter(l => l.status === 'available' && l.isApproved).length;
 
-  const toggleStatus = async (id) => {
-    const listing = listings.find(l => (l._id || l.id) === id);
-    const newStatus = listing.status === 'available' ? 'occupied' : 'available';
-    await listingService.updateListingStatus(id, newStatus);
-    setListings(prev => prev.map(l => (l._id || l.id) === id ? { ...l, status: newStatus } : l));
-    toast.success(`Marked as ${newStatus}`);
+  const [occupancyModal, setOccupancyModal] = useState(null); // { id, title }
+  const [occupiedFrom, setOccupiedFrom] = useState('');
+  const [occupiedUntil, setOccupiedUntil] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
+
+  const openOccupancyModal = (listing) => {
+    setOccupiedFrom(listing.occupiedFrom ? listing.occupiedFrom.slice(0, 10) : '');
+    setOccupiedUntil(listing.occupiedUntil ? listing.occupiedUntil.slice(0, 10) : '');
+    setOccupancyModal({ id: listing._id || listing.id, title: listing.title });
+  };
+
+  const markAvailable = async (id) => {
+    try {
+      await listingService.updateListingStatus(id, 'available');
+      setListings(prev => prev.map(l =>
+        (l._id || l.id) === id ? { ...l, status: 'available', occupiedFrom: null, occupiedUntil: null } : l
+      ));
+      toast.success('Marked as available');
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const submitOccupancy = async () => {
+    if (!occupiedFrom || !occupiedUntil) return toast.error('Please select both start and end dates.');
+    if (new Date(occupiedUntil) <= new Date(occupiedFrom)) return toast.error('End date must be after start date.');
+    setSavingStatus(true);
+    try {
+      await listingService.updateListingStatus(occupancyModal.id, 'occupied', occupiedFrom, occupiedUntil);
+      setListings(prev => prev.map(l =>
+        (l._id || l.id) === occupancyModal.id
+          ? { ...l, status: 'occupied', occupiedFrom, occupiedUntil }
+          : l
+      ));
+      toast.success('Room marked as occupied');
+      setOccupancyModal(null);
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setSavingStatus(false);
+    }
   };
 
   return (
@@ -137,12 +172,25 @@ export default function OwnerDashboardPage() {
                       <span><FiEye size={12} style={{ display: 'inline' }} /> {l.viewCount || 0} views</span>
                       <span><FiHeart size={12} style={{ display: 'inline' }} /> {l.favoriteCount || 0} favs</span>
                     </div>
+                    {/* Occupied date range hint */}
+                    {l.status === 'occupied' && l.occupiedFrom && l.occupiedUntil && (
+                      <div className="flex items-center gap-1" style={{ marginTop: 6, fontSize: '0.78rem', color: 'var(--danger)', fontWeight: 600 }}>
+                        <FiCalendar size={11} />
+                        {new Date(l.occupiedFrom).toLocaleDateString()} – {new Date(l.occupiedUntil).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {(l.status === 'available' || l.status === 'occupied') && (
-                      <button className="btn btn-secondary btn-sm" onClick={() => toggleStatus(l._id || l.id)}>
-                        {l.status === 'available' ? <FiToggleRight size={16} /> : <FiToggleLeft size={16} />}
-                        {l.status === 'available' ? t('owner.markOccupied') : t('owner.markAvailable')}
+                    {l.status === 'available' && (
+                      <button className="btn btn-secondary btn-sm" onClick={() => openOccupancyModal(l)}>
+                        <FiToggleRight size={16} />
+                        {t('owner.markOccupied')}
+                      </button>
+                    )}
+                    {l.status === 'occupied' && (
+                      <button className="btn btn-secondary btn-sm" onClick={() => markAvailable(l._id || l.id)}>
+                        <FiToggleLeft size={16} />
+                        {t('owner.markAvailable')}
                       </button>
                     )}
                     <Link to={`/owner/listings/${l._id || l.id}/edit`} className="btn btn-ghost btn-sm"><FiEdit size={14} /></Link>
@@ -153,6 +201,69 @@ export default function OwnerDashboardPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Occupancy Date-Range Modal */}
+      <AnimatePresence>
+        {occupancyModal && (
+          <>
+            <motion.div
+              className="modal-backdrop"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setOccupancyModal(null)}
+            />
+            <div className="modal-positioner" style={{ maxWidth: 460 }}>
+              <motion.div
+                className="modal-panel"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              >
+                <button className="modal-close-btn" onClick={() => setOccupancyModal(null)} aria-label="Close"><FiX size={18} /></button>
+
+                <div className="modal-icon-wrap">
+                  <div className="modal-icon"><FiCalendar size={26} /></div>
+                </div>
+                <h2 className="modal-title" style={{ fontSize: '1.15rem' }}>Set Unavailability Period</h2>
+                <p className="modal-subtitle" style={{ marginBottom: 'var(--space-5)' }}>
+                  <strong>{occupancyModal.title}</strong> — specify when this room will be occupied so students know when it's available again.
+                </p>
+
+                <div className="grid-2" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">From (Start Date)</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={occupiedFrom}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={e => setOccupiedFrom(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Until (End Date)</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={occupiedUntil}
+                      min={occupiedFrom || new Date().toISOString().slice(0, 10)}
+                      onChange={e => setOccupiedUntil(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button className="btn btn-danger btn-lg w-full" onClick={submitOccupancy} disabled={savingStatus}>
+                    {savingStatus ? <><div className="spinner spinner-sm" style={{ borderTopColor: 'white' }} /> Saving...</> : <><FiToggleRight size={16} /> Mark as Occupied</>}
+                  </button>
+                  <button className="btn btn-secondary btn-lg w-full" onClick={() => setOccupancyModal(null)}>Cancel</button>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

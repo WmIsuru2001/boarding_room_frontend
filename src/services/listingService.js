@@ -9,6 +9,11 @@ export const listingService = {
     const res = await api.get('/listings');
     return res.listings;
   },
+  // Fetches all statuses (available + occupied + pending) for the map view
+  getAllListingsForMap: async () => {
+    const res = await api.get('/listings?status=all&limit=500');
+    return res.listings;
+  },
   getListingById: async (id) => {
     const res = await api.get(`/listings/${id}`);
     return res.listing;
@@ -54,8 +59,8 @@ export const listingService = {
     });
     return res.data;
   },
-  updateListingStatus: async (listingId, status) => {
-    const res = await api.patch(`/listings/${listingId}/status`, { status });
+  updateListingStatus: async (listingId, status, occupiedFrom = null, occupiedUntil = null) => {
+    const res = await api.patch(`/listings/${listingId}/status`, { status, occupiedFrom, occupiedUntil });
     return res.data;
   },
   deleteListing: async (id) => {

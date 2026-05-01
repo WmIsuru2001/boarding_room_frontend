@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { FiMapPin, FiStar, FiHeart, FiPhone, FiShield, FiEye, FiChevronLeft, FiChevronRight, FiTrash2 } from 'react-icons/fi';
+import { FiMapPin, FiStar, FiHeart, FiPhone, FiShield, FiEye, FiChevronLeft, FiChevronRight, FiTrash2, FiCalendar } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
@@ -121,6 +121,18 @@ export default function ListingDetailPage() {
               <span className={`badge ${listing.status === 'available' ? 'badge-success' : 'badge-danger'}`}>{t(`listing.${listing.status}`)}</span>
               {listing.roomType && <span className="badge badge-outline">{t(`listing.${listing.roomType}`)}</span>}
             </div>
+
+            {listing.status === 'occupied' && listing.occupiedFrom && listing.occupiedUntil && (
+              <div style={{ marginBottom: 'var(--space-4)', padding: '12px 16px', background: 'var(--bg-tertiary)', borderLeft: '4px solid var(--danger)', borderRadius: '0 var(--radius-sm) var(--radius-sm) 0' }}>
+                <div className="flex items-center gap-2" style={{ color: 'var(--danger)', fontWeight: 700, marginBottom: '4px', fontSize: '0.95rem' }}>
+                  <FiCalendar size={16} />
+                  <span>Room Unavailable</span>
+                </div>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  This room is occupied from <strong>{new Date(listing.occupiedFrom).toLocaleDateString()}</strong> until <strong>{new Date(listing.occupiedUntil).toLocaleDateString()}</strong>.
+                </p>
+              </div>
+            )}
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 'var(--space-3)' }}>{listing.title}</h1>
             <div className="flex items-center gap-4" style={{ marginBottom: 'var(--space-6)', color: 'var(--text-muted)' }}>
               <span className="flex items-center gap-1"><FiMapPin size={14} /> {listing.location?.address}</span>

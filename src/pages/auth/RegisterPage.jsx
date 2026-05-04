@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiUser, FiMail, FiLock, FiHome, FiBookOpen, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiHome, FiBookOpen, FiEye, FiEyeOff, FiHash, FiImage } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,10 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const [campusRegNo, setCampusRegNo] = useState('');
+  const [studentIdFront, setStudentIdFront] = useState(null);
+  const [studentIdBack, setStudentIdBack] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +32,21 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const user = await register(name, email, password, role);
+      let payload;
+      if (role === 'student') {
+        payload = new FormData();
+        payload.append('name', name);
+        payload.append('email', email);
+        payload.append('password', password);
+        payload.append('role', role);
+        if (campusRegNo) payload.append('campusRegistrationNumber', campusRegNo);
+        if (studentIdFront) payload.append('studentIdFront', studentIdFront);
+        if (studentIdBack) payload.append('studentIdBack', studentIdBack);
+      } else {
+        payload = { name, email, password, role };
+      }
+
+      const user = await register(payload);
       toast.success(role === 'owner' ? 'Account created! Please verify your identity.' : 'Account created!');
       if (user.role === 'owner') navigate('/owner/dashboard');
       else navigate('/');
@@ -80,6 +98,23 @@ export default function RegisterPage() {
               </button>
             </div>
           </div>
+          
+          {role === 'student' && (
+            <>
+              <div className="form-group">
+                <label className="form-label"><FiHash size={14} style={{ display: 'inline', marginRight: 6 }} />Campus Registration Number</label>
+                <input className="form-input" value={campusRegNo} onChange={e => setCampusRegNo(e.target.value)} placeholder="EUSL/TC/IS/2020/COM/101" />
+              </div>
+              <div className="form-group">
+                <label className="form-label"><FiImage size={14} style={{ display: 'inline', marginRight: 6 }} />Student ID Front Photo</label>
+                <input className="form-input" type="file" accept="image/*" onChange={e => setStudentIdFront(e.target.files[0])} />
+              </div>
+              <div className="form-group">
+                <label className="form-label"><FiImage size={14} style={{ display: 'inline', marginRight: 6 }} />Student ID Back Photo</label>
+                <input className="form-input" type="file" accept="image/*" onChange={e => setStudentIdBack(e.target.files[0])} />
+              </div>
+            </>
+          )}
           
           <button className="btn btn-primary w-full" type="submit" disabled={loading} style={{ marginTop: 'var(--space-4)' }}>{loading ? 'Creating...' : t('auth.register')}</button>
         </form>

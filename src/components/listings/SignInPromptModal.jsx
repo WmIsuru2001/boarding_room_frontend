@@ -57,11 +57,10 @@ export default function SignInPromptModal({ isOpen, onClose }) {
 
             {/* Content */}
             <h2 id="signin-prompt-title" className="modal-title">
-              Sign In to View Details
+              {t('auth.signInRequired')}
             </h2>
             <p className="modal-subtitle">
-              Room details are available exclusively to registered students and room owners.
-              Please sign in or create an account to continue.
+              {t('auth.signInToViewDesc')}
             </p>
 
             {/* Actions */}
@@ -72,7 +71,7 @@ export default function SignInPromptModal({ isOpen, onClose }) {
                 onClick={handleLogin}
               >
                 <FiLogIn size={18} />
-                Sign In
+                {t('auth.login')}
               </button>
               <button
                 id="signin-prompt-register-btn"
@@ -80,14 +79,13 @@ export default function SignInPromptModal({ isOpen, onClose }) {
                 onClick={handleRegister}
               >
                 <FiUserPlus size={18} />
-                Create an Account
+                {t('auth.register')}
               </button>
             </div>
 
             <p className="modal-footer-note">
-              Already browsing as a guest?{' '}
-              <span className="modal-dismiss-link" onClick={onClose}>
-                Continue browsing
+              {t('auth.continueBrowsingAsGuest')} <span className="modal-dismiss-link" onClick={onClose}>
+                {t('auth.continueBrowsing')}
               </span>
             </p>
             </motion.div>

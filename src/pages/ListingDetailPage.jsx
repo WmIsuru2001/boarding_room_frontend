@@ -126,11 +126,17 @@ export default function ListingDetailPage() {
               <div style={{ marginBottom: 'var(--space-4)', padding: '12px 16px', background: 'var(--bg-tertiary)', borderLeft: '4px solid var(--danger)', borderRadius: '0 var(--radius-sm) var(--radius-sm) 0' }}>
                 <div className="flex items-center gap-2" style={{ color: 'var(--danger)', fontWeight: 700, marginBottom: '4px', fontSize: '0.95rem' }}>
                   <FiCalendar size={16} />
-                  <span>Room Unavailable</span>
+                  <span>{t('listing.roomUnavailable')}</span>
                 </div>
-                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  This room is occupied from <strong>{new Date(listing.occupiedFrom).toLocaleDateString()}</strong> until <strong>{new Date(listing.occupiedUntil).toLocaleDateString()}</strong>.
-                </p>
+                <p 
+                  style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }} 
+                  dangerouslySetInnerHTML={{ 
+                    __html: t('listing.occupiedPeriod', { 
+                      from: new Date(listing.occupiedFrom).toLocaleDateString(), 
+                      until: new Date(listing.occupiedUntil).toLocaleDateString() 
+                    }) 
+                  }}
+                />
               </div>
             )}
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 'var(--space-3)' }}>{listing.title}</h1>

@@ -41,9 +41,9 @@ export default function OwnerDashboardPage() {
       const formData = new FormData();
       formData.append('nic', nicFile);
       formData.append('bill', billFile);
-      
+
       await authService.uploadVerification(formData);
-      
+
       setVerificationStatus('pending');
       toast.success("Documents submitted successfully. Waiting for admin approval.");
     } catch (err) {
@@ -123,7 +123,7 @@ export default function OwnerDashboardPage() {
           <div className="card" style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-8)', borderLeft: '4px solid var(--warning)', background: 'var(--bg-tertiary)' }}>
             <h3 style={{ color: 'var(--warning)', fontWeight: 700, marginBottom: 'var(--space-2)' }}>⚠️ Account Verification Required</h3>
             <p style={{ marginBottom: 'var(--space-4)', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              <strong>Oyawa thama verify wela na. Karunakara oyage ID ekei, jala bilak/viduli bilak upload karanna.</strong><br/>
+              <strong>Oyawa thama verify wela na. Karunakara oyage ID ekei, jala bilak/viduli bilak upload karanna.</strong><br />
               <span style={{ fontSize: '0.85rem' }}>(You are not verified yet. Please upload your NIC and a utility bill to publish rooms.)</span>
             </p>
             <form onSubmit={handleDocumentSubmit} className="flex gap-4 items-end flex-wrap">
@@ -224,14 +224,14 @@ export default function OwnerDashboardPage() {
                 <div className="modal-icon-wrap">
                   <div className="modal-icon"><FiCalendar size={26} /></div>
                 </div>
-                <h2 className="modal-title" style={{ fontSize: '1.15rem' }}>Set Unavailability Period</h2>
+                <h2 className="modal-title" style={{ fontSize: '1.15rem' }}>{t('owner.setUnavailabilityPeriod')}</h2>
                 <p className="modal-subtitle" style={{ marginBottom: 'var(--space-5)' }}>
-                  <strong>{occupancyModal.title}</strong> — specify when this room will be occupied so students know when it's available again.
+                  {t('owner.unavailabilityDesc')}
                 </p>
 
                 <div className="grid-2" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">From (Start Date)</label>
+                    <label className="form-label">{t('owner.startDate')}</label>
                     <input
                       type="date"
                       className="form-input"
@@ -241,7 +241,7 @@ export default function OwnerDashboardPage() {
                     />
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Until (End Date)</label>
+                    <label className="form-label">{t('owner.endDate')}</label>
                     <input
                       type="date"
                       className="form-input"
@@ -254,9 +254,9 @@ export default function OwnerDashboardPage() {
 
                 <div className="modal-actions">
                   <button className="btn btn-danger btn-lg w-full" onClick={submitOccupancy} disabled={savingStatus}>
-                    {savingStatus ? <><div className="spinner spinner-sm" style={{ borderTopColor: 'white' }} /> Saving...</> : <><FiToggleRight size={16} /> Mark as Occupied</>}
+                    {savingStatus ? <><div className="spinner spinner-sm" style={{ borderTopColor: 'white' }} /> Saving...</> : <><FiToggleRight size={16} /> {t('owner.markOccupied')}</>}
                   </button>
-                  <button className="btn btn-secondary btn-lg w-full" onClick={() => setOccupancyModal(null)}>Cancel</button>
+                  <button className="btn btn-secondary btn-lg w-full" onClick={() => setOccupancyModal(null)}>{t('owner.cancel')}</button>
                 </div>
               </motion.div>
             </div>

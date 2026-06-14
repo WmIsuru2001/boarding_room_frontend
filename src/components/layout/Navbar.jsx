@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FiSearch, FiChevronDown, FiUser, FiHeart, FiLogOut, FiSettings, FiGrid, FiMap, FiGlobe } from 'react-icons/fi';
+import { FiSearch, FiChevronDown, FiUser, FiHeart, FiLogOut, FiSettings, FiGrid, FiMap, FiGlobe, FiMenu, FiX } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTranslation } from 'react-i18next';
@@ -13,11 +13,12 @@ export default function Navbar() {
   const { t } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { language, changeLanguage } = useLanguage();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef(null);
-  const langNames = { en: 'English', si: 'සිංහල', ta: 'தமிழ்' };
+  const langNames = { en: 'English', si: 'සිංහල', ta: 'தமිழ්' };
   const isActive = (path) => location.pathname === path;
 
   useEffect(() => {
@@ -29,20 +30,24 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleSearch = (e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(`/search?q=${encodeURIComponent(searchQuery)}`); setSearchQuery(''); } };
-  const handleLogout = () => { logout(); navigate('/'); setDropdownOpen(false); };
+  const handleSearch = (e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(`/search?q=${encodeURIComponent(searchQuery)}`); setSearchQuery(''); setMobileMenuOpen(false); } };
+  const handleLogout = () => { logout(); navigate('/'); setDropdownOpen(false); setMobileMenuOpen(false); };
 
   return (
     <nav className="navbar">
-      <div className="navbar-inner">
+      <div className="navbar-inner" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
         <Link to="/" className="navbar-logo">🎓 UniBoard</Link>
-        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: 400, margin: '0 2rem' }}>
+        
+        {/* Desktop Search Bar */}
+        <form onSubmit={handleSearch} className="navbar-search-form" style={{ flex: 1, maxWidth: 400, margin: '0 2rem' }}>
           <div className="search-bar">
             <FiSearch style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input type="text" placeholder={t('home.searchPlaceholder')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
         </form>
-        <div className="navbar-links">
+        
+        {/* Desktop Navigation */}
+        <div className="navbar-links navbar-links-desktop">
           <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>{t('nav.home')}</Link>
           <Link to="/search" className={`nav-link ${isActive('/search') ? 'active' : ''}`}>{t('nav.listings')}</Link>
           <Link to="/map" className={`nav-link ${isActive('/map') ? 'active' : ''}`}><FiMap size={15} /> {t('nav.map')}</Link>
@@ -104,7 +109,58 @@ export default function Navbar() {
             </div>
           )}
         </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="mobile-menu-btn"
+        >
+          {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="mobile-menu"
+          >
+            <form onSubmit={handleSearch} style={{ padding: 'var(--space-3)' }}>
+              <div className="search-bar" style={{ marginBottom: 'var(--space-3)' }}>
+                <FiSearch style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                <input type="text" placeholder={t('home.searchPlaceholder')} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              </div>
+            </form>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-3)' }}>
+              <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{t('nav.home')}</Link>
+              <Link to="/search" className={`mobile-nav-link ${isActive('/search') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{t('nav.listings')}</Link>
+              <Link to="/map" className={`mobile-nav-link ${isActive('/map') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}><FiMap size={15} /> {t('nav.map')}</Link>
+              
+              {isAuthenticated ? (
+                <>
+                  {isStudent && <Link to="/favorites" className={`mobile-nav-link ${isActive('/favorites') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}><FiHeart size={15} /> {t('nav.saved')}</Link>}
+                  {isOwner && <Link to="/owner/dashboard" className={`mobile-nav-link ${isActive('/owner/dashboard') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{t('nav.dashboard')}</Link>}
+                  {isAdmin && <Link to="/admin" className={`mobile-nav-link ${isActive('/admin') ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{t('nav.admin')}</Link>}
+                  <div style={{ borderTop: '1px solid var(--border)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)' }}>
+                    <button className="mobile-nav-link" onClick={() => { changeLanguage(language === 'en' ? 'si' : language === 'si' ? 'ta' : 'en'); setMobileMenuOpen(false); }} style={{ width: '100%' }}>
+                      <FiGlobe size={15} /> {langNames[language]}
+                    </button>
+                    <button className="mobile-nav-link danger" onClick={handleLogout} style={{ width: '100%' }}><FiLogOut size={15} /> {t('nav.signOut')}</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>{t('nav.signIn')}</Link>
+                  <Link to="/register" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>{t('nav.getStarted')}</Link>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

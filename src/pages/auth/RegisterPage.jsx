@@ -117,7 +117,7 @@ export default function RegisterPage() {
 
   // Validate all fields
   const validateForm = () => {
-    const newErrors = {};
+    let newErrors = {};
 
     // Validate basic fields
     newErrors = { ...newErrors, ...validateField('name', name) };
